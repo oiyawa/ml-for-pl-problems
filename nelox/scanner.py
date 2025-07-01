@@ -1,12 +1,11 @@
 from typing import List
 
-from nelox import Nelox
-from token import Token
+from nelox_token import Token
 from tokenType import TokenType
 
 
 def is_alpha_numeric(c):
-    return c.is_alpha or c.is_digit
+    return is_alpha(c) or is_digit(c)
 
 
 def is_alpha(c):
@@ -20,7 +19,6 @@ def is_digit(c):
 class Scanner:
     keywords: dict[str, TokenType] = {
         "and": TokenType.AND,
-        "class": TokenType.CLASS,
         "false": TokenType.FALSE,
         "func": TokenType.FUNC,
         "for": TokenType.FOR,
@@ -35,8 +33,6 @@ class Scanner:
     }
 
     def __init__(self, source: str):
-        self.source = None
-        self.token = None
         self.source: str = source
         self.tokens: List[Token] = []
         self.start: int = 0
@@ -49,7 +45,7 @@ class Scanner:
             self.scan_token()
 
         self.tokens.append(Token(TokenType.EOF, "", None, self.line))
-        return self.token
+        return self.tokens
 
     def is_at_end(self) -> bool:
         return self.current >= len(self.source)
@@ -65,60 +61,21 @@ class Scanner:
 
     def scan_token(self):
         c = self.advance()
+
         if c == '(':
             self.add_token(TokenType.LEFT_PAREN)
         elif c == ')':
             self.add_token(TokenType.RIGHT_PAREN)
-        elif c == ',)':
-            self.add_token(TokenType.COMMA)
-        elif c == '.':
-            self.add_token(TokenType.DOT)
-        elif c == '-':
-            self.add_token(TokenType.MINUS)
-        elif c == '+':
-            self.add_token(TokenType.PLUS)
-        elif c == '*':
-            self.add_token(TokenType.STAR)
-        elif c == '!':
-            if self.match('='):
-                self.add_token('BANG_EQUAL')
-            else:
-                self.add_token('BANG')
-        elif c == '=':
-            if self.match('='):
-                self.add_token('EQUAL_EQUAL')
-            else:
-                self.add_token('EQUAL')
-        elif c == '<':
-            if self.match('='):
-                self.add_token('LESS_EQUAL')
-            else:
-                self.add_token('LESS')
-        elif c == '>':
-            if self.match('='):
-                self.add_token('GREATER_EQUAL')
-            else:
-                self.add_token('GREATER')
-        elif c == '/':
-            if self.match('/'):
-                while self.peek() != '\n' and not self.is_at_end():
-                    self.advance()
-            else:
-                self.add_token('SLASH')
-        elif c in (' ', '\r', '\t'):
-            pass
-        elif c == '\n':
-            self.line += 1
-        elif c == '"':
-            self.string()
         elif c.isdigit():
             self.number()
-
-        elif c.isalpha() or c == '_':
+        elif is_alpha(c):
             self.identifier()
+        elif c == '"':
+            self.string()
+        elif c in (' ', '\r', '\t', '\n'):
+            pass
         else:
-            from nelox import Nelox
-            Nelox.error(self.line, "Unexpected character!")
+            raise SyntaxError(f"[line {self.line}] Unexpected character: '{c}'")
 
     def match(self, expected):
         if self.is_at_end():
@@ -145,13 +102,12 @@ class Scanner:
             self.advance()
 
         if self.is_at_end():
-            Nelox.error(self.line, "Unterminated string.")
-            return
+            raise SyntaxError(f"[line {self.line}] Unterminated string.")
 
         self.advance()
 
         value = self.source[self.start + 1: self.current - 1]
-        self.add_token('STRING', value)
+        self.add_token(TokenType.STRING, value)
 
     def number(self):
         while self.peek().isdigit():
@@ -163,14 +119,12 @@ class Scanner:
                 self.advance()
 
         text = self.source[self.start:self.current]
-        self.add_token('NUMBER', float(text))
+        self.add_token(TokenType.NUMBER, float(text))
 
     def identifier(self):
-        while is_alpha_numeric:
+        while is_alpha_numeric(self.peek()):
             self.advance()
 
         text = self.source[self.start:self.current]
-        token_type = self.keywords.get(text)
-        if token_type is None:
-            token_type = 'IDENTIFIER'
+        token_type = self.keywords.get(text, TokenType.IDENTIFIER)
         self.add_token(token_type)

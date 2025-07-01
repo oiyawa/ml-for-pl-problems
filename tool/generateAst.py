@@ -16,7 +16,9 @@ def main():
         "Literal  : value",
         "Logical  : left, operator, right",
         "Unary    : operator, right",
-        "Variable : name"
+        "Variable : name",
+        "Lambda   : params, body",
+        "If       : condition, then_branch, else_branch"
     ])
 
     define_ast(output_dir, "Stmt", [

@@ -2,6 +2,7 @@ from enum import Enum, auto
 
 
 class TokenType(Enum):
+    ATOM = auto()
     LEFT_PAREN = auto()
     RIGHT_PAREN = auto()
     COMMA = auto()
@@ -26,7 +27,6 @@ class TokenType(Enum):
 
     SET = auto()
     AND = auto()
-    CLASS = auto()
     FALSE = auto()
     FUNC = auto()
     FOR = auto()
